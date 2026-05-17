@@ -10,12 +10,10 @@ Uso:
 import hashlib
 import os
 import sys
-import json
 import getpass
 import hmac
 
-_DIR       = os.path.dirname(os.path.abspath(__file__))
-USERS_FILE = os.path.join(_DIR, "data", "users.json")
+import db
 
 PBKDF2_ITERS = 200_000
 PBKDF2_ALGO  = "sha256"
@@ -26,19 +24,6 @@ MAX_USER_LEN = 64
 MAX_PASS_LEN = 128
 
 # ── Helpers ───────────────────────────────────────────────────────────
-
-def _load_users() -> dict:
-    try:
-        with open(USERS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
-
-
-def _save_users(users: dict) -> None:
-    with open(USERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(users, f, indent=2)
-
 
 def _hash_password(password: str) -> tuple:
     """Devuelve (salt_hex, pbkdf2_hex)."""
@@ -80,8 +65,7 @@ def cmd_create() -> None:
         print(f"[ERROR] {err}")
         sys.exit(1)
 
-    users = _load_users()
-    if username in users:
+    if db.user_exists(username):
         print(f"[ERROR] El usuario '{username}' ya existe.")
         sys.exit(1)
 
@@ -98,35 +82,32 @@ def cmd_create() -> None:
         sys.exit(1)
 
     salt, hashed = _hash_password(password)
-    users[username] = {"salt": salt, "hash": hashed}
-    _save_users(users)
+    db.create_user(username, salt, hashed)
     print(f"[OK] Usuario '{username}' creado correctamente.")
 
 
 def cmd_list() -> None:
-    users = _load_users()
-    if not users:
+    rows = db.list_users()
+    if not rows:
         print("No hay usuarios registrados.")
         return
     print(f"\n{'Usuario':<30}  Hash (primeros 16 chars)")
     print("-" * 55)
-    for name, data in users.items():
-        print(f"  {name:<28}  {data['hash'][:16]}…")
+    for row in rows:
+        print(f"  {row['username']:<28}  {row['hash'][:16]}…")
 
 
 def cmd_delete() -> None:
     print("\n── Eliminar usuario ─────────────────────────")
     username = input("Usuario a eliminar: ").strip()
-    users = _load_users()
-    if username not in users:
+    if not db.user_exists(username):
         print(f"[ERROR] El usuario '{username}' no existe.")
         sys.exit(1)
     confirm = input(f"¿Confirmar eliminación de '{username}'? (s/N): ").strip().lower()
     if confirm != 's':
         print("Operación cancelada.")
         return
-    del users[username]
-    _save_users(users)
+    db.delete_user(username)
     print(f"[OK] Usuario '{username}' eliminado.")
 
 # ── Menú principal ────────────────────────────────────────────────────

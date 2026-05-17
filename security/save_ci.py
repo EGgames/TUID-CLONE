@@ -19,15 +19,15 @@ import secrets
 import base64
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-_DIR       = os.path.dirname(os.path.abspath(__file__))
-USERS_FILE = os.path.join(_DIR, "data", "users.json")
+import db
 
 # CI en reposo (INFO-01): passphrase desde env var o archivo .keymaster
 def _load_key_passphrase() -> "bytes | None":
+    _dir = os.path.dirname(os.path.abspath(__file__))
     env_val = os.environ.get("KEY_ENCRYPTION_KEY", "").strip()
     if env_val:
         return env_val.encode("utf-8")
-    keymaster = os.path.join(_DIR, "data", ".keymaster")
+    keymaster = os.path.join(_dir, "data", ".keymaster")
     try:
         with open(keymaster, "rb") as f:
             val = f.read().strip()
@@ -50,31 +50,7 @@ ERR_CI_ALREADY_SET = 2
 ERR_SERVER         = 5
 
 
-def _load_json(path: str, default):
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError, PermissionError):
-        return default
-
-
-def _save_json_atomic(path: str, data) -> None:
-    """Escribe en archivo temporal y renombra para evitar corrupción."""
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-    os.replace(tmp, path)
-
-
 def _is_valid_ci(ci: str) -> bool:
-    """
-    Acepta formatos de CI (estilo RUT chileno):
-      Con puntos:    1.234.567-8   12.345.678-K
-      Sin puntos:    1234567-8     12345678-K
-    El dígito verificador puede ser 0-9 o K/k.
-    Solo valida el formato; no aplica algoritmo mod-11 para no rechazar
-    CIs válidos emitidos con distintos estándares.
-    """
     if not isinstance(ci, str):
         return False
     ci_nodots = ci.strip().replace(".", "")
@@ -82,7 +58,6 @@ def _is_valid_ci(ci: str) -> bool:
 
 
 def _normalize_ci(ci: str) -> str:
-    """Normaliza a formato N.NNN.NNN-D para almacenamiento uniforme."""
     ci = ci.strip().upper()
     ci_nodots = ci.replace(".", "")
     parts = ci_nodots.split("-")
@@ -111,38 +86,23 @@ def main() -> None:
         print(json.dumps({"status": "error", "code": ERR_SERVER}))
         return
 
-    # Validar formato de CI
     if not _is_valid_ci(ci):
         print(json.dumps({"status": "error", "code": ERR_INVALID_FORMAT}))
         return
 
     ci_normalized = _normalize_ci(ci)
 
-    # Cargar usuarios
-    users = _load_json(USERS_FILE, None)
-    if users is None or not isinstance(users, dict):
-        print(json.dumps({"status": "error", "code": ERR_SERVER}))
-        return
-
     # Verificar que el usuario existe
-    if username not in users:
+    if not db.user_exists(username):
         print(json.dumps({"status": "error", "code": ERR_SERVER}))
-        return
-
-    # Verificar inmutabilidad: si ya tiene CI, bloquear
-    if users[username].get("ci"):
-        print(json.dumps({"status": "error", "code": ERR_CI_ALREADY_SET}))
         return
 
     # Cifrar CI en reposo si hay passphrase configurada (INFO-01)
     ci_to_store = _encrypt_ci(ci_normalized, _KEY_PASSPHRASE) if _KEY_PASSPHRASE else ci_normalized
 
-    # Guardar CI (escritura atómica)
-    users[username]["ci"] = ci_to_store
-    try:
-        _save_json_atomic(USERS_FILE, users)
-    except (OSError, PermissionError):
-        print(json.dumps({"status": "error", "code": ERR_SERVER}))
+    # update_user_ci usa WHERE ci IS NULL → garantiza inmutabilidad en la BD
+    if not db.update_user_ci(username, ci_to_store):
+        print(json.dumps({"status": "error", "code": ERR_CI_ALREADY_SET}))
         return
 
     print(json.dumps({"status": "ok"}))

@@ -1,5 +1,6 @@
-# Archivos sensibles — NO subir a GitHub
-security/data/users.json
+# Archivos sensibles — NO subir a GitHubsecurity/data/app.db
+security/data/app.db-wal
+security/data/app.db-shmsecurity/data/users.json
 security/data/users.json.bak
 security/data/sessions.json
 security/data/attempts.json

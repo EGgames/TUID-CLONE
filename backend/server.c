@@ -39,6 +39,8 @@
 #define SIGN_CMD          "python security\\sign_doc.py"
 #define VERIFY_CMD        "python security\\verify_doc.py"
 #define KEYGEN_CMD        "python security\\keygen.py"
+#define CHECK_SESSION_CMD "python security\\check_session.py"
+#define GET_USER_CI_CMD   "python security\\get_user_ci.py"
 
 /* Límites de tamaño de body por ruta (BAJA-02) */
 #define MAX_BODY_LOGIN     1024L
@@ -306,62 +308,39 @@ static void audit_log(const char *severity, const char *event,
     LeaveCriticalSection(&g_audit_cs);
 }
 
+/* forward declaration — definida mas adelante en el archivo */
+static int run_python(const char *script, const char *json_in,
+                      char *out_buf, int out_len);
+
 /* ------------------------------------------------------------------ */
-/* Validacion de sesion en C (sin lanzar Python)                        */
+/* Validacion de sesion via check_session.py (SQLite)                   */
 /* ------------------------------------------------------------------ */
 
-/* Lee sessions.json y verifica que el token exista y no haya expirado.
-   Formato esperado: {"<token>": {"username": "...", "expires": <float>}}
+/* Llama a check_session.py pasando el token por stdin.
+   Formato de salida: {"valid": true/false, "username": "..."}
    Devuelve 1 si válido, 0 en caso contrario.                          */
 /* user_out (opcional): se rellena con el username de la sesion si la sesion es valida */
 static int c_check_session(const char *token, char *user_out, int user_len)
 {
     if (user_out && user_len > 0) user_out[0] = '\0';
+    if (!token || !token[0]) return 0;
 
-    EnterCriticalSection(&g_sess_cs);
-    FILE *f = fopen(SESSIONS_FILE, "r");
-    if (!f) { LeaveCriticalSection(&g_sess_cs); return 0; }
-    fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    rewind(f);
-    char *buf = (char *)malloc(sz + 1);
-    if (!buf) { fclose(f); LeaveCriticalSection(&g_sess_cs); return 0; }
-    fread(buf, 1, sz, f);
-    buf[sz] = '\0';
-    fclose(f);
-    LeaveCriticalSection(&g_sess_cs);
+    char py_out[256] = {0};
+    run_python(CHECK_SESSION_CMD, token, py_out, sizeof(py_out));
 
-    /* Buscar el token como clave JSON: "<token64>" */
-    char needle[70];
-    snprintf(needle, sizeof(needle), "\"%s\"", token);
-    const char *pos = strstr(buf, needle);
-    if (!pos) { free(buf); return 0; }
+    if (!strstr(py_out, "\"valid\": true")) return 0;
 
-    /* Extraer username del objeto de sesion */
     if (user_out && user_len > 0) {
-        const char *up = strstr(pos, "\"username\":");
+        const char *up = strstr(py_out, "\"username\": \"");
         if (up) {
-            up += 11;
-            while (*up == ' ' || *up == '\t') up++;
-            if (*up == '"') {
-                up++;
-                int i = 0;
-                while (*up && *up != '"' && i < user_len - 1)
-                    user_out[i++] = *up++;
-                user_out[i] = '\0';
-            }
+            up += 13;
+            int i = 0;
+            while (*up && *up != '"' && i < user_len - 1)
+                user_out[i++] = *up++;
+            user_out[i] = '\0';
         }
     }
-
-    /* Localizar "expires": dentro de ese objeto */
-    const char *ep = strstr(pos, "\"expires\":");
-    if (!ep) { free(buf); return 0; }
-    ep += 10;
-    while (*ep == ' ') ep++;
-    double expires = strtod(ep, NULL);
-    free(buf);
-
-    return (double)time(NULL) < expires;
+    return 1;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1592,62 +1571,34 @@ static void handle_login(SOCKET client, const char *req_full, const char *client
    sz: tamano actual del contenido; cap: capacidad total del buffer.
    Retorna 0 si no cabe, 1 si ok. */
 /* ------------------------------------------------------------------ */
-/* Acceso a users.json para leer CI por usuario                         */
+/* Acceso a SQLite para leer CI por usuario via get_user_ci.py          */
 /* ------------------------------------------------------------------ */
 
-/* Lee el valor de 'field' dentro del bloque JSON del 'username' dado.
-   Usa g_users_cs para proteger el acceso concurrente.
-   Devuelve 1 si encontrado y no vacío; 0 en caso contrario.            */
+/* Llama a get_user_ci.py pasando el username por stdin.
+   Formato de salida: {"ci": "<valor>"} o {"ci": null}
+   Devuelve 1 si encontrado y no vacio; 0 en caso contrario.           */
 static int c_get_user_field(const char *username, const char *field,
                              char *out, int out_len)
 {
+    (void)field; /* unico campo soportado: "ci" via get_user_ci.py */
     if (out && out_len > 0) out[0] = '\0';
+    if (!username || !username[0]) return 0;
 
-    EnterCriticalSection(&g_users_cs);
-    FILE *f = fopen(USERS_FILE, "r");
-    if (!f) { LeaveCriticalSection(&g_users_cs); return 0; }
-    fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    rewind(f);
-    char *buf = (char *)malloc(sz + 1);
-    if (!buf) { fclose(f); LeaveCriticalSection(&g_users_cs); return 0; }
-    fread(buf, 1, sz, f);
-    buf[sz] = '\0';
-    fclose(f);
-    LeaveCriticalSection(&g_users_cs);
+    char py_out[256] = {0};
+    run_python(GET_USER_CI_CMD, username, py_out, sizeof(py_out));
 
-    /* Encontrar la clave "username" en el JSON */
-    char user_needle[70];
-    snprintf(user_needle, sizeof(user_needle), "\"%s\"", username);
-    const char *user_pos = strstr(buf, user_needle);
-    if (!user_pos) { free(buf); return 0; }
-
-    /* Encontrar el { que abre el objeto de este usuario */
-    const char *block = strchr(user_pos + strlen(user_needle), '{');
-    if (!block) { free(buf); return 0; }
-
-    /* Encontrar el } que cierra el objeto (no hay objetos anidados) */
-    const char *end = strchr(block + 1, '}');
-    if (!end) { free(buf); return 0; }
-
-    /* Buscar "field": dentro del bloque */
-    char field_needle[70];
-    snprintf(field_needle, sizeof(field_needle), "\"%s\":", field);
-    const char *fp = strstr(block, field_needle);
-    if (!fp || fp >= end) { free(buf); return 0; }
-
-    fp += strlen(field_needle);
-    while (*fp == ' ' || *fp == '\t') fp++;
-    if (*fp != '"') { free(buf); return 0; }
-    fp++; /* saltar la comilla de apertura */
-
-    int i = 0;
-    while (*fp && *fp != '"' && i < out_len - 1)
-        out[i++] = *fp++;
-    out[i] = '\0';
-
-    free(buf);
-    return i > 0;
+    /* Output esperado: {"ci": "..."} o {"ci": null} */
+    const char *cp = strstr(py_out, "\"ci\": \"");
+    if (!cp) return 0;
+    cp += 7;
+    if (out && out_len > 0) {
+        int i = 0;
+        while (*cp && *cp != '"' && i < out_len - 1)
+            out[i++] = *cp++;
+        out[i] = '\0';
+        return i > 0;
+    }
+    return 1;
 }
 
 /* Devuelve 1 si el usuario tiene CI registrado, 0 si no. */

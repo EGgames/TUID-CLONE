@@ -21,15 +21,13 @@ import hashlib
 import secrets
 import os
 import re
-import time
 import base64
-import contextlib
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from keygen import generate_keys
 
-# -- Rutas de archivos ---------------------------------------------------
-_DIR       = os.path.dirname(os.path.abspath(__file__))
-USERS_FILE = os.path.join(_DIR, "data", "users.json")
+import db
+
+_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # -- Configuracion de seguridad ------------------------------------------
 PBKDF2_ITERS = 200_000   # Igual que auth.py (NIST SP 800-132)
@@ -64,55 +62,6 @@ ERR_USER_EXISTS   = 2
 ERR_WEAK_PASSWORD = 3
 ERR_SERVER        = 5
 ERR_INVALID_CI    = 6
-
-
-# -- Utilidades de E/S ---------------------------------------------------
-
-def _load_json(path: str, default):
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError, PermissionError):
-        return default
-
-
-def _save_json_atomic(path: str, data) -> None:
-    """Escribe en archivo temporal y renombra para evitar corrupcion."""
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-    os.replace(tmp, path)
-
-
-# -- File locking para users.json (MEDIA-04 / TOCTOU) -------------------
-
-@contextlib.contextmanager
-def _users_lock():
-    """Exclusión mutua para users.json mediante archivo .lock."""
-    lockfile = USERS_FILE + ".lock"
-    deadline = time.monotonic() + 5.0
-    while True:
-        try:
-            fd = os.open(lockfile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.close(fd)
-            break
-        except FileExistsError:
-            try:
-                if time.monotonic() - os.path.getmtime(lockfile) > 30:
-                    os.remove(lockfile)
-                    continue
-            except OSError:
-                pass
-            if time.monotonic() > deadline:
-                break
-            time.sleep(0.02)
-    try:
-        yield
-    finally:
-        try:
-            os.remove(lockfile)
-        except OSError:
-            pass
 
 
 # -- Validacion de entradas ----------------------------------------------
@@ -250,36 +199,21 @@ def main() -> None:
     # Cifrar CI en reposo si hay passphrase configurada (INFO-01)
     ci_to_store = _encrypt_ci(ci_normalized, _KEY_PASSPHRASE) if _KEY_PASSPHRASE else ci_normalized
 
-    # 5-7. Comprobar unicidad y registrar dentro del lock para evitar TOCTOU (MEDIA-04)
-    with _users_lock():
-        users = _load_json(USERS_FILE, {})
-        if username in users:
-            print(json.dumps({"status": "error", "code": ERR_USER_EXISTS}))
-            return
+    # 5. Generar salt único y derivar hash PBKDF2
+    salt = secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac(
+        PBKDF2_ALGO,
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        PBKDF2_ITERS
+    )
 
-        # 6. Generar salt único y derivar hash PBKDF2
-        salt = secrets.token_hex(16)
-        dk = hashlib.pbkdf2_hmac(
-            PBKDF2_ALGO,
-            password.encode("utf-8"),
-            salt.encode("utf-8"),
-            PBKDF2_ITERS
-        )
+    # 6. Insertar usuario de forma atómica (db.create_user usa INSERT que falla si ya existe)
+    if not db.create_user(username, salt, dk.hex(), ci_to_store):
+        print(json.dumps({"status": "error", "code": ERR_USER_EXISTS}))
+        return
 
-        # 7. Guardar usuario (escritura atómica para evitar corrupcion)
-        users[username] = {
-            "salt": salt,
-            "hash": dk.hex(),
-            "ci":   ci_to_store
-        }
-
-        try:
-            _save_json_atomic(USERS_FILE, users)
-        except (OSError, PermissionError):
-            print(json.dumps({"status": "error", "code": ERR_SERVER}))
-            return
-
-    # 8. Generar par de claves RSA-2048 para firma digital (fuera del lock: operación lenta)
+    # 7. Generar par de claves RSA-2048 para firma digital
     generate_keys(username)
 
     print(json.dumps({"status": "ok"}))

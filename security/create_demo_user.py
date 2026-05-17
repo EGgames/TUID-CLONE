@@ -8,10 +8,9 @@ Contraseña  : Admin123!
 
 import hashlib
 import os
-import json
 
-_DIR         = os.path.dirname(os.path.abspath(__file__))
-USERS_FILE   = os.path.join(_DIR, "data", "users.json")
+import db
+
 PBKDF2_ITERS = 200_000
 
 DEMO_USER = "admin"
@@ -26,22 +25,12 @@ def _hash_password(password: str) -> tuple:
 
 
 def main() -> None:
-    try:
-        with open(USERS_FILE, "r", encoding="utf-8") as f:
-            users = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        users = {}
-
-    if DEMO_USER in users:
+    if db.user_exists(DEMO_USER):
         print(f"[INFO] El usuario '{DEMO_USER}' ya existe.")
         return
 
     salt, hashed = _hash_password(DEMO_PASS)
-    users[DEMO_USER] = {"salt": salt, "hash": hashed}
-
-    with open(USERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(users, f, indent=2)
-
+    db.create_user(DEMO_USER, salt, hashed)
     print(f"[OK] Usuario demo creado → usuario: {DEMO_USER} / contraseña: {DEMO_PASS}")
 
 

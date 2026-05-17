@@ -19,13 +19,8 @@ import hmac
 import os
 import time
 import secrets
-import contextlib
 
-# ── Rutas de archivos ────────────────────────────────────────────────
-_DIR          = os.path.dirname(os.path.abspath(__file__))
-USERS_FILE    = os.path.join(_DIR, "data", "users.json")
-ATTEMPTS_FILE = os.path.join(_DIR, "data", "attempts.json")
-SESSIONS_FILE = os.path.join(_DIR, "data", "sessions.json")
+import db
 
 # ── Configuración de sesiones ─────────────────────────────────────────
 SESSION_EXPIRY = 3600   # segundos (1 hora)
@@ -35,51 +30,6 @@ MAX_ATTEMPTS  = 5        # intentos fallidos antes del bloqueo
 LOCKOUT_SECS  = 300      # duración del bloqueo (5 minutos)
 PBKDF2_ITERS  = 200_000  # iteraciones PBKDF2 (NIST SP 800-132 recomienda ≥ 10k)
 PBKDF2_ALGO   = "sha256"
-
-# ── Utilidades de E/S ─────────────────────────────────────────────────
-
-def _load_json(path: str, default):
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError, PermissionError):
-        return default
-
-
-def _save_json(path: str, data) -> None:
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-
-
-# ── Exclusión mutua para attempts.json (MEDIA-04) ─────────────────────────
-
-@contextlib.contextmanager
-def _attempts_lock():
-    """Filesystem lock para attempts.json: previene race conditions entre threads."""
-    lockfile = ATTEMPTS_FILE + ".lock"
-    deadline = time.monotonic() + 5.0
-    while True:
-        try:
-            fd = os.open(lockfile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.close(fd)
-            break
-        except FileExistsError:
-            try:
-                if time.monotonic() - os.path.getmtime(lockfile) > 30:
-                    os.remove(lockfile)
-                    continue
-            except OSError:
-                pass
-            if time.monotonic() > deadline:
-                break  # Fallar abierto: no bloquear el servidor indefinidamente
-            time.sleep(0.02)
-    try:
-        yield
-    finally:
-        try:
-            os.remove(lockfile)
-        except OSError:
-            pass
 
 
 # ── Validación de entradas ────────────────────────────────────────────
@@ -99,45 +49,30 @@ def _check_rate_limit(username: str) -> tuple:
     """
     Devuelve (permitido: bool, mensaje: str).
     Si la cuenta está bloqueada, devuelve (False, mensaje con tiempo restante).
+    SQLite garantiza atomicidad; no se necesitan file-locks.
     """
-    with _attempts_lock():
-        attempts = _load_json(ATTEMPTS_FILE, {})
-        entry = attempts.get(username, {"count": 0, "since": 0.0})
-        now = time.time()
+    row = db.get_attempts(username)
+    now = time.time()
 
-        if entry["count"] >= MAX_ATTEMPTS:
-            elapsed = now - entry["since"]
-            if elapsed < LOCKOUT_SECS:
-                remaining = int(LOCKOUT_SECS - elapsed)
-                mins = remaining // 60
-                secs = remaining % 60
-                return False, f"Cuenta bloqueada. Intenta en {mins}m {secs}s."
-            # El bloqueo expiró → reiniciar
-            entry = {"count": 0, "since": now}
-            attempts[username] = entry
-            _save_json(ATTEMPTS_FILE, attempts)
+    if row and row["count"] >= MAX_ATTEMPTS:
+        elapsed = now - row["since"]
+        if elapsed < LOCKOUT_SECS:
+            remaining = int(LOCKOUT_SECS - elapsed)
+            mins = remaining // 60
+            secs = remaining % 60
+            return False, f"Cuenta bloqueada. Intenta en {mins}m {secs}s."
+        # El bloqueo expiró → reiniciar
+        db.reset_attempts(username)
 
-        return True, ""
+    return True, ""
 
 
 def _record_failed(username: str) -> None:
-    with _attempts_lock():
-        attempts = _load_json(ATTEMPTS_FILE, {})
-        entry = attempts.get(username, {"count": 0, "since": 0.0})
-
-        if entry["count"] == 0:
-            entry["since"] = time.time()
-        entry["count"] += 1
-        attempts[username] = entry
-        _save_json(ATTEMPTS_FILE, attempts)
+    db.increment_attempts(username, time.time())
 
 
 def _reset_attempts(username: str) -> None:
-    with _attempts_lock():
-        attempts = _load_json(ATTEMPTS_FILE, {})
-        if username in attempts:
-            del attempts[username]
-            _save_json(ATTEMPTS_FILE, attempts)
+    db.reset_attempts(username)
 
 
 # ── Verificación de contraseña ────────────────────────────────────────
@@ -187,30 +122,24 @@ def main() -> None:
         print(json.dumps({"status": "error", "message": lock_msg}))
         return
 
-    # 4. Cargar base de datos de usuarios
-    users = _load_json(USERS_FILE, {})
+    # 4. Obtener usuario de la BD
+    user = db.get_user(username)
 
     # 5. Verificar credenciales
     #    IMPORTANTE: misma rama de código para usuario inexistente y contraseña
     #    incorrecta → evita enumeración de usuarios.
     valid = False
-    if username in users:
-        user = users[username]
+    if user:
         valid = _verify_password(password, user["salt"], user["hash"])
 
     if valid:
         _reset_attempts(username)
         # Generar token de sesión seguro
         token = secrets.token_hex(32)
-        sessions = _load_json(SESSIONS_FILE, {})
-        # Purgar sesiones expiradas antes de añadir la nueva (MEDIA-02)
         now_ts = time.time()
-        sessions = {k: v for k, v in sessions.items() if v.get("expires", 0) > now_ts}
-        sessions[token] = {
-            "username": username,
-            "expires": now_ts + SESSION_EXPIRY
-        }
-        _save_json(SESSIONS_FILE, sessions)
+        # Purgar sesiones expiradas antes de añadir la nueva (MEDIA-02)
+        db.purge_expired_sessions(now_ts)
+        db.create_session(token, username, now_ts + SESSION_EXPIRY)
         print(json.dumps({
             "status": "ok",
             "message": f"¡Bienvenido, {username}!",
