@@ -1,0 +1,258 @@
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0d0d1a 0%, #111827 50%, #0f2044 100%);
+      color: #fff;
+      padding: 28px 20px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 24px;
+      padding: 52px 48px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    /* ── Logo ── */
+    .logo {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo-icon {
+      width: 68px;
+      height: 68px;
+      background: linear-gradient(135deg, #e84393, #3b5bdb);
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(232, 67, 147, 0.35);
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.42);
+      font-size: 0.88rem;
+      margin-top: 6px;
+    }
+
+    /* ── Tech badges ── */
+    .tech-badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .badge-c   { background: rgba(90, 160, 230, 0.18); color: #5aa0e6; border: 1px solid rgba(90,160,230,0.3); }
+    .badge-py  { background: rgba(255, 212, 59, 0.15); color: #ffd43b; border: 1px solid rgba(255,212,59,0.3); }
+    .badge-html{ background: rgba(255, 107, 53, 0.15); color: #ff6b35; border: 1px solid rgba(255,107,53,0.3); }
+
+    /* ── Separador ── */
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.07);
+      margin: 32px 0;
+    }
+
+    /* ── Formulario ── */
+    .form-group { margin-bottom: 28px; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: rgba(255, 255, 255, 0.3);
+      pointer-events: none;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px 13px 42px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 11px;
+      color: #fff;
+      font-size: 0.97rem;
+      outline: none;
+      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input::placeholder { color: rgba(255, 255, 255, 0.25); }
+
+    input:focus {
+      border-color: #e84393;
+      background: rgba(255, 255, 255, 0.09);
+      box-shadow: 0 0 0 3px rgba(232, 67, 147, 0.15);
+    }
+
+    input.input-error {
+      border-color: #ff6b6b;
+      box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.12);
+    }
+
+    /* ── Botón ── */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #e84393 0%, #c0215f 100%);
+      border: none;
+      border-radius: 11px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: opacity 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+      box-shadow: 0 6px 20px rgba(232, 67, 147, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover:not(:disabled) {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(232, 67, 147, 0.42);
+    }
+
+    .btn:active:not(:disabled) { transform: translateY(0); }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Alertas ── */
+    .alert {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-top: 18px;
+      line-height: 1.4;
+    }
+
+    .alert.show { display: flex; }
+
+    .alert-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .alert-success {
+      background: rgba(46, 213, 115, 0.12);
+      border: 1px solid rgba(46, 213, 115, 0.35);
+      color: #2ed573;
+    }
+
+    .alert-error {
+      background: rgba(255, 107, 107, 0.12);
+      border: 1px solid rgba(255, 107, 107, 0.35);
+      color: #ff8e8e;
+    }
+
+    /* ── Footer seguridad ── */
+    .security-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.25);
+      margin-top: 32px;
+    }
+
+    .security-footer svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 540px) {
+      body  { align-items: flex-start; padding: 20px 16px 36px; }
+      .card { padding: 36px 28px 32px; border-radius: 20px; }
+      h1    { font-size: 1.5rem; }
+      .tech-badges { gap: 6px; flex-wrap: wrap; }
+      .btn  { font-size: 0.9rem; letter-spacing: 0.6px; }
+    }
+    @media (max-width: 420px) {
+      body  { padding: 16px 12px 28px; }
+      .card { padding: 28px 18px 24px; border-radius: 16px; }
+      h1    { font-size: 1.3rem; }
+      .logo-icon { width: 58px; height: 58px; font-size: 26px; border-radius: 15px; }
+    }
+    @media (max-width: 360px) {
+      .card { padding: 22px 14px 20px; }
+      h1    { font-size: 1.15rem; }
+      .logo-icon { width: 52px; height: 52px; font-size: 23px; }
+    }
+  

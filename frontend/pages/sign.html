@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Firma Digital</title>
+  <link rel="stylesheet" href="/css/sign.css">
+</head>
+<body>
+
+<div class="card">
+
+  <div class="logo">
+    <div class="logo-icon">🔏</div>
+    <h1>Firma Digital</h1>
+    <p class="subtitle">Firma documentos con tu identidad</p>
+    <div class="signer-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      Firmando como: <strong>__SIGNUSER__</strong>
+    </div>
+  </div>
+
+  <!-- Resultado de firma (visible solo tras POST exitoso) -->
+  <div id="signResult" class="result-box" style="display:none;">
+
+    <!-- Encabezado visible solo al imprimir/PDF -->
+    <div class="pdf-cert-header" style="display:none; text-align:center; padding:0 0 18px; border-bottom:2px solid #1a1a2e; margin-bottom:20px;">
+      <div style="font-size:1.5rem; font-weight:800; color:#1a1a2e; letter-spacing:1px; text-transform:uppercase;">Certificado de Firma Digital</div>
+      <div style="font-size:0.78rem; color:#555; margin-top:5px;">Sistema ID_LOGIN &nbsp;&middot;&nbsp; RSA-2048 PSS/SHA-256 &nbsp;&middot;&nbsp; ISO 27001</div>
+    </div>
+
+    <div class="result-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      Documento firmado exitosamente
+    </div>
+
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Firmante</span>
+        <span class="info-value" id="signerVal">__SIGNER__</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Cédula</span>
+        <span class="info-value" id="ciVal">__SIGNCI__</span>
+      </div>
+      <div class="info-item" style="grid-column: 1 / -1;">
+        <span class="info-label">Fecha y hora (UTC)</span>
+        <span class="info-value" id="tsVal">__SIGTS__</span>
+      </div>
+      <div class="info-item" style="grid-column: 1 / -1;">
+        <span class="info-label">Algoritmo</span>
+        <span class="info-value">RSA-2048 · PSS · SHA-256</span>
+      </div>
+    </div>
+
+    <div class="info-label" style="margin-bottom:6px;">Contenido firmado</div>
+    <pre class="signed-text" id="textVal">__SIGTEXT__</pre>
+
+    <div class="token-label">Token de verificación</div>
+    <textarea readonly rows="4" id="tokenVal">__SIGTOKEN__</textarea>
+
+    <button type="button" class="btn-pdf" id="btnPdf">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
+      Descargar certificado PDF
+    </button>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div id="signErr" class="alert alert-error" style="display:none;">
+    <span class="alert-icon">✕</span>
+    <span>No se pudo firmar el documento. Verifica que el texto no esté vacío e inténtalo de nuevo.</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Formulario -->
+  <form method="POST" action="/sign">
+    <input type="hidden" name="csrf_token" value="__CSRF_TOKEN__">
+    <div class="form-group">
+      <label for="text">Documento o texto a firmar</label>
+      <textarea id="text" name="text" rows="5"
+        placeholder="Escribe o pega aquí el texto que deseas firmar...&#10;(máximo 2.000 caracteres)"
+        maxlength="2000" required></textarea>
+    </div>
+
+    <button type="submit" class="btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      Firmar Documento
+    </button>
+  </form>
+
+  <div class="links">
+    <a href="/dashboard" class="link">
+      ← Volver al dashboard
+    </a>
+    <a href="/verify" class="link">
+      Verificar una firma →
+    </a>
+  </div>
+
+  <div class="security-footer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    RSA-2048 · PSS/SHA-256 · ISO 27001
+  </div>
+
+</div>
+<script src="/js/jspdf.min.js"></script>
+<script src="/js/sign.js"></script>
+
+</body>
+</html>

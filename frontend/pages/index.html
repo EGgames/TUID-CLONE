@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Seguro</title>
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Logo / encabezado -->
+  <div class="logo">
+    <div class="logo-icon">🔐</div>
+    <h1>Iniciar Sesión</h1>
+    <p class="subtitle">Sistema de autenticación segura</p>
+    <div class="tech-badges">
+      <span class="badge badge-c">Backend C</span>
+      <span class="badge badge-py">Security Python</span>
+      <span class="badge badge-html">HTML5</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Formulario -->
+  <form method="POST" action="/login" autocomplete="on">
+    <input type="hidden" name="csrf_token" value="__CSRF_TOKEN__">
+
+    <div class="form-group">
+      <label for="username">Usuario</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <input type="text" id="username" name="username"
+               placeholder="Tu nombre de usuario"
+               autocomplete="username"
+               required maxlength="64" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Contraseña</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <input type="password" id="password" name="password"
+               placeholder="Tu contraseña"
+               autocomplete="current-password"
+               required maxlength="128" />
+      </div>
+    </div>
+
+    <button type="submit" class="btn">Entrar</button>
+
+  </form>
+
+  <!-- Error: visible/hidden controlado por el servidor, nunca por JS -->
+  <div id="loginError" class="alert alert-error" role="alert" style="display:none">
+    <span class="alert-icon">✕</span>
+    <span>Usuario o contraseña incorrectos.</span>
+  </div>
+
+  <!-- Exito de registro: el servidor inyecta display:flex cuando ?registered=1 -->
+  <div id="loginSuccess" class="alert alert-success" role="alert" style="display:none">
+    <span class="alert-icon">✓</span>
+    <span>Cuenta creada con éxito. Ya puedes iniciar sesión.</span>
+  </div>
+
+  <!-- Link a registro -->
+  <p style="text-align:center; margin-top:26px; font-size:0.85rem; color:rgba(255,255,255,0.4)">
+    ¿No tienes cuenta?
+    <a href="/register" style="color:#3b82f6; text-decoration:none; font-weight:600">Regístrate</a>
+  </p>
+
+  <!-- Footer -->
+  <div class="security-footer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    PBKDF2-SHA256 · Anti fuerza bruta · Sin enumeración de usuarios
+  </div>
+
+</div>
+
+</body>
+</html>

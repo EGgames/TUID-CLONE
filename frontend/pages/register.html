@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crear Cuenta</title>
+  <link rel="stylesheet" href="/css/register.css">
+</head>
+<body>
+
+<div class="card">
+
+  <div class="logo">
+    <div class="logo-icon">👤</div>
+    <h1>Crear Cuenta</h1>
+    <p class="subtitle">Registro de nuevo usuario</p>
+    <div class="tech-badges">
+      <span class="badge badge-c">Backend C</span>
+      <span class="badge badge-py">Security Python</span>
+      <span class="badge badge-html">HTML5</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <form method="POST" action="/register" autocomplete="off">
+    <input type="hidden" name="csrf_token" value="__CSRF_TOKEN__">
+
+    <div class="form-group">
+      <label for="username">Nombre de Usuario</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <input type="text" id="username" name="username"
+               placeholder="3-32 caracteres: letras, números, _ - ."
+               autocomplete="off"
+               required minlength="3" maxlength="32" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Contraseña</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <input type="password" id="password" name="password"
+               placeholder="Mínimo 8 caracteres"
+               autocomplete="new-password"
+               required minlength="8" maxlength="128" />
+      </div>
+      <p class="password-hint">Debe contener: mayúscula, minúscula, número y carácter especial.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="confirm">Confirmar Contraseña</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <input type="password" id="confirm" name="confirm"
+               placeholder="Repite la contraseña"
+               autocomplete="new-password"
+               required minlength="8" maxlength="128" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="ci">Cédula de Identidad</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <path d="M16 10h2"/>
+          <path d="M16 14h2"/>
+          <circle cx="9" cy="10" r="2"/>
+          <path d="M6 14c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2"/>
+        </svg>
+        <input type="text" id="ci" name="ci"
+               placeholder="Ej: 12.345.678-9"
+               autocomplete="off"
+               required maxlength="12" />
+      </div>
+      <p class="password-hint">Formatos aceptados: 1.234.567-8 &nbsp;&middot;&nbsp; 12.345.678-K</p>
+    </div>
+
+    
+    <!-- CAPTCHA aritmético — token y pregunta inyectados por el servidor -->
+    <div class="form-group captcha-group">
+      <label>Verificación anti-bot</label>
+      <div class="captcha-box">
+        <span class="captcha-question">¿Cuánto es <strong>__CAPTCHA_Q__</strong>?</span>
+        <div class="input-wrapper captcha-input">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8v4l3 3"/>
+          </svg>
+          <input type="text" id="captcha_ans" name="captcha_ans"
+                 placeholder="Resultado"
+                 autocomplete="off" inputmode="numeric"
+                 required maxlength="3" />
+        </div>
+      </div>
+      <input type="hidden" name="captcha_tok" value="__CAPTCHA_TK__">
+    </div>
+
+    <button type="submit" class="btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <line x1="19" y1="8" x2="19" y2="14"/>
+        <line x1="22" y1="11" x2="16" y2="11"/>
+      </svg>
+      Crear Cuenta
+    </button>
+
+  </form>
+
+  <!-- Errores: visibilidad controlada por el servidor (nunca por JS) -->
+  <div id="regErr1" class="alert alert-error" role="alert" style="display:none">
+    <span class="alert-icon">✕</span>
+    <span>Datos inválidos. El usuario solo admite letras, números, guiones y puntos (3–32 caracteres).</span>
+  </div>
+
+  <div id="regErr2" class="alert alert-error" role="alert" style="display:none">
+    <span class="alert-icon">✕</span>
+    <span>Ese nombre de usuario ya está en uso. Elige otro.</span>
+  </div>
+
+  <div id="regErr3" class="alert alert-error" role="alert" style="display:none">
+    <span class="alert-icon">✕</span>
+    <span>La contraseña es demasiado débil. Debe tener al menos 8 caracteres, mayúscula, minúscula, número y símbolo.</span>
+  </div>
+
+  <div id="regErr4" class="alert alert-error" role="alert" style="display:none">
+    <span class="alert-icon">✕</span>
+    <span>Las contraseñas no coinciden. Vuelve a intentarlo.</span>
+  </div>
+
+  <div id="regErr5" class="alert alert-error" role="alert" style="display:none">
+    <span class="alert-icon">✕</span>
+    <span>Error interno del servidor. Inténtalo de nuevo más tarde.</span>
+  </div>
+
+  <div id="regErr6" class="alert alert-error" role="alert" style="display:none">
+    <span class="alert-icon">✕</span>
+    <span>Número de CI inválido. Usa el formato: 1.234.567-8 ó 12.345.678-K</span>
+  </div>
+
+  <div id="regErr8" class="alert alert-error" role="alert" style="display:none">
+    <span class="alert-icon">✕</span>
+    <span>Verificación anti-bot incorrecta. Recarga la página e inténtalo de nuevo.</span>
+  </div>
+
+  <p class="login-link">¿Ya tienes cuenta? <a href="/">Iniciar sesión</a></p>
+
+  <div class="security-footer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    PBKDF2-SHA256 · Sin almacenamiento de contraseñas · ISO 27001
+  </div>
+
+</div>
+
+
+<script src="/js/register.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+# Archivos sensibles — NO subir a GitHub
+security/data/users.json
+security/data/users.json.bak
+security/data/sessions.json
+security/data/attempts.json
+security/data/audit.log
+security/data/keys/
+security/keys/
+security/ssl/
+security/_auth_backup.py
+
+# Archivos temporales de credenciales (generados por server.c)
+tmp_crd_*.json
+temp_creds.json
+temp_session.txt
+*.tmp
+
+# Binarios compilados
+backend/*.exe
+backend/*.o
+backend/*.obj
+backend/build_out.txt
+backend/compile_err.txt
+backend/compile_errors.txt
+backend/err.txt
+backend/full_err.txt
+backend/g_err.txt
+backend/link_err.txt
+backend/pp_err.txt
+backend/server_err.txt
+backend/server_out.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Certificados SSL locales
+*.pem
+*.key
+*.crt
+*.csr
+
+# Logs
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

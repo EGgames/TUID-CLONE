@@ -1,0 +1,335 @@
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0d0d1a 0%, #111827 50%, #0f2044 100%);
+      color: #fff;
+      padding: 36px 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 24px;
+      padding: 52px 48px;
+      width: 100%;
+      max-width: 580px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo-icon {
+      width: 68px;
+      height: 68px;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(124, 58, 237, 0.40);
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.42);
+      font-size: 0.88rem;
+      margin-top: 6px;
+    }
+
+    .signer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(124, 58, 237, 0.14);
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.82rem;
+      color: #c4b5fd;
+      margin-top: 10px;
+    }
+
+    .signer-badge svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.07);
+      margin: 32px 0;
+    }
+
+    .form-group { margin-bottom: 28px; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    textarea {
+      width: 100%;
+      padding: 13px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 11px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+      min-height: 130px;
+      line-height: 1.55;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    textarea::placeholder { color: rgba(255, 255, 255, 0.25); }
+
+    textarea:focus {
+      border-color: #7c3aed;
+      background: rgba(255, 255, 255, 0.09);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+    }
+
+    textarea[readonly] {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.08);
+      cursor: text;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.6);
+      min-height: 80px;
+      word-break: break-all;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      width: 100%;
+      min-width: 0;
+      overflow-y: auto;
+      resize: none;
+    }
+
+    pre.signed-text {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 9px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.75);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      max-height: 120px;
+      overflow-y: auto;
+      line-height: 1.5;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+      border: none;
+      border-radius: 11px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover  { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 10px 28px rgba(124,58,237,0.48); }
+    .btn:active { transform: translateY(0); }
+
+    .result-box {
+      display: none;
+      flex-direction: column;
+      background: rgba(16, 185, 129, 0.07);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 22px;
+      min-width: 0;
+      overflow: visible;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #6ee7b7;
+      margin-bottom: 16px;
+    }
+
+    .result-header svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 16px;
+      margin-bottom: 16px;
+    }
+
+    .info-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+    .info-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    .info-value {
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 500;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      min-width: 0;
+    }
+
+    .token-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.35);
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+
+    .alert {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-bottom: 18px;
+      line-height: 1.4;
+    }
+
+    .alert-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    .alert-error {
+      background: rgba(255, 107, 107, 0.12);
+      border: 1px solid rgba(255, 107, 107, 0.35);
+      color: #ff8e8e;
+    }
+
+    .links {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 18px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .link {
+      font-size: 0.82rem;
+      color: #a78bfa;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.2s;
+    }
+
+    .link:hover { color: #c4b5fd; }
+
+    .security-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.25);
+      margin-top: 32px;
+    }
+
+    .security-footer svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    /* ── Botón PDF ── */
+    .btn-pdf {
+      width: 100%;
+      padding: 11px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 11px;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.83rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-family: inherit;
+    }
+    .btn-pdf:hover {
+      background: rgba(124, 58, 237, 0.15);
+      border-color: rgba(124, 58, 237, 0.45);
+      color: #c4b5fd;
+    }
+    .btn-pdf svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      body  { align-items: flex-start; padding: 24px 16px 36px; }
+      .card { padding: 36px 28px 32px; border-radius: 20px; }
+      h1    { font-size: 1.5rem; }
+      .info-grid { grid-template-columns: 1fr; gap: 8px; }
+      .links { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .signer-badge { max-width: 100%; overflow-wrap: break-word; }
+    }
+    @media (max-width: 460px) {
+      body  { padding: 16px 12px 28px; }
+      .card { padding: 28px 18px 24px; border-radius: 16px; }
+      h1    { font-size: 1.3rem; }
+      .logo-icon { width: 58px; height: 58px; font-size: 26px; border-radius: 15px; }
+      .btn, .btn-pdf { font-size: 0.86rem; letter-spacing: 0.6px; padding: 12px; }
+      textarea { min-height: 100px; }
+    }
+    @media (max-width: 380px) {
+      .card  { padding: 22px 14px 20px; }
+      h1     { font-size: 1.15rem; }
+      .logo-icon { width: 52px; height: 52px; font-size: 23px; }
+    }
+  
